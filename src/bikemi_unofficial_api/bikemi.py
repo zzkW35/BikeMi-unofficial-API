@@ -4,15 +4,13 @@ import requests
 import unidecode
 
 from geopy import distance
-from math import asin, cos, pi, sqrt
 from operator import itemgetter
 
 
 class BikeMiApi:
-
-    # Generate a list of stations, stored as dictionaries, manipulating the
-    # json files provided by BikeMi at https://bikemi.com/dati-aperti/
     def json_decoder(self, info_url):
+        """Generate a list of stations, stored as dictionaries, manipulating the
+        json files provided by BikeMi at https://bikemi.com/dati-aperti/"""
         resp = requests.get(info_url)
         raw = resp.json()
         # Pick the "stations" values inside the "data" key of the "raw" dict
@@ -20,8 +18,8 @@ class BikeMiApi:
         # Each station is a dictionary inside the list called "stations"
         return stations
 
-    # Get further info (bike availability) by scraping the website source
     def get_stations_extra_info(self):
+        """Get further info (bike availability) by scraping the website source"""
         raw = requests.get("https://bikemi.com/stazioni").text
         placeholder = '"stationMapPage","slug":null},'
         start = raw.find(placeholder) + len(placeholder)
@@ -103,9 +101,9 @@ class BikeMiApi:
         # Return a list containing all the stations, stored as dictionaries
         return station_extra_info_list
 
-    # Merge basic info gathered from the Open Data (json)
-    # with the extra info scraped from the website
     def get_stations_full_info(self, get_stations_basic_info, stations_extra_info):
+        """Merge basic info gathered from the Open Data (json)
+        with the extra info scraped from the website"""
         get_stations_basic_info_sorted = sorted(
             get_stations_basic_info, key=itemgetter("station_id")
         )
@@ -121,10 +119,10 @@ class BikeMiApi:
 
         return stations_full_info
 
-    # Search and yield stations by typing their names or their unique IDs,
-    # it's meant to be used with
-    # https://gbfs.urbansharing.com/bikemi.com/station_information.json
     def find_station(self, stations, user_input):
+        """Search and yield stations by typing their names or their unique IDs,
+        it's meant to be used with
+        https://gbfs.urbansharing.com/bikemi.com/station_information.json"""
         # Remove accents, all the spaces and special chars from the input
         user_input_edit = re.sub("[^A-Za-z0-9]+", "", unidecode.unidecode(user_input))
 
@@ -140,12 +138,12 @@ class BikeMiApi:
             ):
                 yield station
 
-    # Sort all the stations by chosen key
     def sort(self, stations, key):
+        """Sort all the stations by chosen key"""
         return sorted(stations, key=itemgetter(key))
 
-    # Get the nearest station given latitude and longitude
     def get_nearest_station(self, stations_full_info, lat, lon):
+        """Get the nearest station given latitude and longitude"""
         distances = []
         for station in stations_full_info:
             coord_input = (lat, lon)
