@@ -125,6 +125,7 @@ class BikeMiApi:
         https://gbfs.urbansharing.com/bikemi.com/station_information.json"""
         # Remove accents, all the spaces and special chars from the input
         user_input_edit = re.sub("[^A-Za-z0-9]+", "", unidecode.unidecode(user_input))
+        found_station_list = []
 
         for station in stations:
             # Temporarily treat the station names like user_input
@@ -136,7 +137,16 @@ class BikeMiApi:
                 re.search(user_input_edit, station_edit, re.IGNORECASE)
                 or re.search(user_input, station["station_id"], re.IGNORECASE)
             ):
-                yield station
+                found_station_list.append(station)
+            else:
+                found_station_list.append(0)
+
+        if not any(found_station_list):
+            yield None
+        if any(found_station_list):
+            for element in found_station_list:
+                if element != 0:
+                    yield element
 
     def sort(self, stations, key):
         """Sort all the stations by chosen key"""
