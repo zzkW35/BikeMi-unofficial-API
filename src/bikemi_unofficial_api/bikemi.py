@@ -23,83 +23,24 @@ class BikeMiApi:
         raw = requests.get("https://bikemi.com/stazioni").text
         placeholder = '"stationMapPage","slug":null},'
         start = raw.find(placeholder) + len(placeholder)
-        end = raw.find('"baseUrl":"https://bikemi.com"')
-        station_extra_info_raw = raw[start:end].split("DockGroup:")
+        end = raw.find('},"baseUrl":"https://bikemi.com"')
+        station_extra_info_raw = "{" + (raw[start:end])
         # Each station is a string inside the list called "station_extra_info_list"
-        station_extra_info_list = []
         station_list = []
-        del station_extra_info_raw[0]  # Remove the first element, which is empty
-        # Split the raw code into small chunks of data
-        for station in station_extra_info_raw:
-            station = station.split(",")
-            data = [word for line in station for word in line.split(":")]
-
-            # Create station_list containing only the relevant data
-            # Each station with its data is a list
-            if len(data) == 49:
-                station_list.extend(
-                    (
-                        data[1],
-                        data[2],
-                        data[5],
-                        data[6],
-                        data[9],
-                        data[10],
-                        data[13],
-                        data[14],
-                        data[18],
-                        data[19],
-                        data[20],
-                        data[21],
-                        data[26],
-                        data[28],
-                        data[32],
-                        data[34],
-                        data[38],
-                        data[40],
-                    )
-                )
-            if len(data) == 50:  # For the stations with extra address info
-                station_list.extend(
-                    (
-                        data[1],
-                        data[2],
-                        data[5],
-                        data[6],
-                        data[9],
-                        data[10],
-                        data[14],
-                        data[15],
-                        data[19],
-                        data[20],
-                        data[21],
-                        data[22],
-                        data[27],
-                        data[29],
-                        data[33],
-                        data[35],
-                        data[39],
-                        data[41],
-                    )
-                )
-
-            # Data cleanup
-            titles = station_list[::2]  # Pick only the data placed in odd positions
-            info = station_list[1::2]  # Pick only the data placed in even positions
-            titles = [
-                i.replace('"', "").replace("{", "").replace("id", "station_id")
-                for i in titles
-            ]
-            info = [i.replace('"', "").replace("}", "").replace("]", "") for i in info]
-            # Parse the data in a dictionary where "titles" are the keys
-            # and "info" are the values
-            station_dict = dict(zip(titles, info))
-            # Add the newly created dictionary inside a list
-            if bool(station_dict) == True:
-                station_extra_info_list.append(station_dict)
+        jsontxt = json.loads(station_extra_info_raw)
+        for element in jsontxt:
+            station_info = {"station_id": jsontxt[element]["id"], 
+            "bike":jsontxt[element]["availabilityInfo"]["availableVehicleCategories"][0]["count"],
+            "ebike":jsontxt[element]["availabilityInfo"]["availableVehicleCategories"][1]["count"],
+            "ebike_with_childseat":jsontxt[element]["availabilityInfo"]["availableVehicleCategories"][2]["count"],
+            "availableDocks":jsontxt[element]["availabilityInfo"]["availableDocks"],
+            "availableVirtualDocks":jsontxt[element]["availabilityInfo"]["availableVirtualDocks"],
+            "availablePhysicalDocks":jsontxt[element]["availabilityInfo"]["availablePhysicalDocks"],
+            }
+            station_list.append(station_info)
 
         # Return a list containing all the stations, stored as dictionaries
-        return station_extra_info_list
+        return station_list
 
     def get_stations_full_info(self, get_stations_basic_info, stations_extra_info):
         """Merge basic info gathered from the Open Data (json)
