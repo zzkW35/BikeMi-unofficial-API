@@ -29,13 +29,26 @@ class BikeMiApi:
         station_list = []
         jsontxt = json.loads(station_extra_info_raw)
         for element in jsontxt:
-            station_info = {"station_id": jsontxt[element]["id"], 
-            "bike":jsontxt[element]["availabilityInfo"]["availableVehicleCategories"][0]["count"],
-            "ebike":jsontxt[element]["availabilityInfo"]["availableVehicleCategories"][1]["count"],
-            "ebike_with_childseat":jsontxt[element]["availabilityInfo"]["availableVehicleCategories"][2]["count"],
-            "availableDocks":jsontxt[element]["availabilityInfo"]["availableDocks"],
-            "availableVirtualDocks":jsontxt[element]["availabilityInfo"]["availableVirtualDocks"],
-            "availablePhysicalDocks":jsontxt[element]["availabilityInfo"]["availablePhysicalDocks"],
+            station_info = {
+                "station_id": jsontxt[element]["id"],
+                "bike": jsontxt[element]["availabilityInfo"][
+                    "availableVehicleCategories"
+                ][0]["count"],
+                "ebike": jsontxt[element]["availabilityInfo"][
+                    "availableVehicleCategories"
+                ][1]["count"],
+                "ebike_with_childseat": jsontxt[element]["availabilityInfo"][
+                    "availableVehicleCategories"
+                ][2]["count"],
+                "availableDocks": jsontxt[element]["availabilityInfo"][
+                    "availableDocks"
+                ],
+                "availableVirtualDocks": jsontxt[element]["availabilityInfo"][
+                    "availableVirtualDocks"
+                ],
+                "availablePhysicalDocks": jsontxt[element]["availabilityInfo"][
+                    "availablePhysicalDocks"
+                ],
             }
             station_list.append(station_info)
 
