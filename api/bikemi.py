@@ -9,28 +9,32 @@ from operator import itemgetter
 
 class BikeMiApi:
     def json_decoder(self, info_url):
-        """Generate a list of stations, stored as dictionaries, manipulating the
+        """Generate a list of stations, stored as dictionaries, by using the
         json files provided by BikeMi at https://bikemi.com/dati-aperti/"""
         resp = requests.get(info_url)
         raw = resp.json()
         # Pick the "stations" values inside the "data" key of the "raw" dict
         stations = raw["data"]["stations"]
+        for element in stations:
+            del element["name"]
         # Each station is a dictionary inside the list called "stations"
-        return stations
+        return json.dumps(stations, indent=4)
 
-    def get_stations_extra_info(self):
-        """Get further info (bike availability) by scraping the website source"""
+    def get_station_extra_info_json(self):
+        """Get further info (bike availability) by scraping the bikemi.com source"""
         raw = requests.get("https://bikemi.com/stazioni").text
         placeholder = '"stationMapPage","slug":null},'
         start = raw.find(placeholder) + len(placeholder)
         end = raw.find('},"baseUrl":"https://bikemi.com"')
         station_extra_info_raw = "{" + (raw[start:end])
-        # Each station is a string inside the list called "station_extra_info_list"
+        # Each station is a string inside the list called "station_list"
         station_list = []
         jsontxt = json.loads(station_extra_info_raw)
         for element in jsontxt:
             station_info = {
                 "station_id": jsontxt[element]["id"],
+                "name": jsontxt[element]["name"],
+                "title": jsontxt[element]["title"],
                 "bike": jsontxt[element]["availabilityInfo"][
                     "availableVehicleCategories"
                 ][0]["count"],
@@ -53,16 +57,19 @@ class BikeMiApi:
             station_list.append(station_info)
 
         # Return a list containing all the stations, stored as dictionaries
-        return station_list
+        return json.dumps(station_list, indent=4)
 
-    def get_stations_full_info(self, get_stations_basic_info, stations_extra_info):
-        """Merge basic info gathered from the Open Data (json)
-        with the extra info scraped from the website"""
+    def get_station_full_info_json(self, url):
+        """Merge basic info from the Open Data with the extra info
+        scraped from the website.
+        Note: both input files have to be in json format"""
+        get_stations_basic_info = self.json_decoder(url)
+        stations_extra_info = self.get_station_extra_info_json()
         get_stations_basic_info_sorted = sorted(
-            get_stations_basic_info, key=itemgetter("station_id")
+            json.loads(get_stations_basic_info), key=itemgetter("station_id")
         )
         stations_extra_info_sorted = sorted(
-            stations_extra_info, key=itemgetter("station_id")
+            json.loads(stations_extra_info), key=itemgetter("station_id")
         )
         stations_full_info = [
             a | b
@@ -71,7 +78,7 @@ class BikeMiApi:
             )
         ]
 
-        return stations_full_info
+        return json.dumps(stations_full_info, indent=4)
 
     def find_station(self, stations, user_input):
         """Search and yield stations by typing their names or their unique IDs,
@@ -84,7 +91,7 @@ class BikeMiApi:
         for station in stations:
             # Temporarily treat the station names like user_input
             station_edit = re.sub(
-                "[^A-Za-z0-9]+", "", unidecode.unidecode(station["name"])
+                "[^A-Za-z0-9]+", "", unidecode.unidecode(station["title"])
             )
             # Check if user_input and stations match
             if user_input_edit != ("") and (
