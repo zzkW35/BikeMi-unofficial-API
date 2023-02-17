@@ -1,17 +1,21 @@
+"""Main API file."""
+from operator import itemgetter
+
 import json
 import re
 import requests
 import unidecode
 
 from geopy import distance
-from operator import itemgetter
 
 
 class BikeMiApi:
+    """Scrape and parse the BikeMi website."""
+
     def json_decoder(self, info_url):
         """Generate a list of stations, stored as dictionaries, by using the
         json files provided by BikeMi at https://bikemi.com/dati-aperti/"""
-        resp = requests.get(info_url)
+        resp = requests.get(info_url, timeout=10)
         raw = resp.json()
         # Pick the "stations" values inside the "data" key of the "raw" dict
         stations = raw["data"]["stations"]
@@ -22,7 +26,7 @@ class BikeMiApi:
 
     def get_station_extra_info_json(self):
         """Get further info (bike availability) by scraping the bikemi.com source"""
-        raw = requests.get("https://bikemi.com/stazioni").text
+        raw = requests.get("https://bikemi.com/stazioni", timeout=10).text
         placeholder = '"stationMapPage","slug":null},'
         start = raw.find(placeholder) + len(placeholder)
         end = raw.find('},"baseUrl":"https://bikemi.com"')
